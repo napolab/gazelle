@@ -7,19 +7,35 @@ import argparse
 # preprocessing adapted from https://github.com/ejcgt/attention-target-detection/blob/master/dataset.py
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--data_path", type=str, default="./data/gazefollow")
+parser.add_argument('--data_path', type=str, default='./data/gazefollow')
 args = parser.parse_args()
 
 
 def main(DATA_PATH):
-
     # TRAIN
-    train_csv_path = os.path.join(DATA_PATH, "train_annotations_release.txt")
-    column_names = ['path', 'idx', 'body_bbox_x', 'body_bbox_y', 'body_bbox_w', 'body_bbox_h', 'eye_x', 'eye_y',
-                                'gaze_x', 'gaze_y', 'bbox_x_min', 'bbox_y_min', 'bbox_x_max', 'bbox_y_max', 'inout', 'source', 'meta']
+    train_csv_path = os.path.join(DATA_PATH, 'train_annotations_release.txt')
+    column_names = [
+        'path',
+        'idx',
+        'body_bbox_x',
+        'body_bbox_y',
+        'body_bbox_w',
+        'body_bbox_h',
+        'eye_x',
+        'eye_y',
+        'gaze_x',
+        'gaze_y',
+        'bbox_x_min',
+        'bbox_y_min',
+        'bbox_x_max',
+        'bbox_y_max',
+        'inout',
+        'source',
+        'meta',
+    ]
     df = pd.read_csv(train_csv_path, header=None, names=column_names, index_col=False)
     df = df[df['inout'] != -1]
-    df = df.groupby("path").agg(list) # aggregate over frames
+    df = df.groupby('path').agg(list)  # aggregate over frames
 
     multiperson_ex = 0
     TRAIN_FRAMES = []
@@ -36,12 +52,16 @@ def main(DATA_PATH):
         crop_constraint_ys = []
 
         for i in range(num_people):
-            xmin, ymin, xmax, ymax = row['bbox_x_min'][i], row['bbox_y_min'][i], row['bbox_x_max'][i], row['bbox_y_max'][i]
+            xmin, ymin, xmax, ymax = (
+                row['bbox_x_min'][i],
+                row['bbox_y_min'][i],
+                row['bbox_x_max'][i],
+                row['bbox_y_max'][i],
+            )
             gazex = row['gaze_x'][i] * float(width)
             gazey = row['gaze_y'][i] * float(height)
             gazex_norm = row['gaze_x'][i]
             gazey_norm = row['gaze_y'][i]
-
 
             if xmin > xmax:
                 temp = xmin
@@ -57,7 +77,7 @@ def main(DATA_PATH):
             ymin = max(ymin, 0)
             xmax = min(xmax, width)
             ymax = min(ymax, height)
-            
+
             # precalculate feasible crop region (containing bbox and gaze target)
             crop_xmin = min(xmin, gazex)
             crop_ymin = min(ymin, gazey)
@@ -66,40 +86,81 @@ def main(DATA_PATH):
             crop_constraint_xs.extend([crop_xmin, crop_xmax])
             crop_constraint_ys.extend([crop_ymin, crop_ymax])
 
-            heads.append({
-                'bbox': [xmin, ymin, xmax, ymax],
-                'bbox_norm': [xmin / float(width), ymin / float(height), xmax / float(width), xmax / float(height)],
-                'inout': row['inout'][i],
-                'gazex': [gazex], # convert to list for consistency with multi-annotation format
-                'gazey': [gazey],
-                'gazex_norm': [gazex_norm],
-                'gazey_norm': [gazey_norm],
-                'crop_region': [crop_xmin, crop_ymin, crop_xmax, crop_ymax],
-                'crop_region_norm': [crop_xmin / float(width), crop_ymin / float(height), crop_xmin / float(width), crop_ymax / float(height)],
-                'head_id': i
-            })
-        TRAIN_FRAMES.append({
-            'path': path,
-            'heads': heads,
-            'num_heads': num_people,
-            'width': width,
-            'height': height,
-            'crop_region': [min(crop_constraint_xs), min(crop_constraint_ys), max(crop_constraint_xs), max(crop_constraint_ys)],
-        })
+            heads.append(
+                {
+                    'bbox': [xmin, ymin, xmax, ymax],
+                    'bbox_norm': [
+                        xmin / float(width),
+                        ymin / float(height),
+                        xmax / float(width),
+                        xmax / float(height),
+                    ],
+                    'inout': row['inout'][i],
+                    'gazex': [
+                        gazex
+                    ],  # convert to list for consistency with multi-annotation format
+                    'gazey': [gazey],
+                    'gazex_norm': [gazex_norm],
+                    'gazey_norm': [gazey_norm],
+                    'crop_region': [crop_xmin, crop_ymin, crop_xmax, crop_ymax],
+                    'crop_region_norm': [
+                        crop_xmin / float(width),
+                        crop_ymin / float(height),
+                        crop_xmin / float(width),
+                        crop_ymax / float(height),
+                    ],
+                    'head_id': i,
+                }
+            )
+        TRAIN_FRAMES.append(
+            {
+                'path': path,
+                'heads': heads,
+                'num_heads': num_people,
+                'width': width,
+                'height': height,
+                'crop_region': [
+                    min(crop_constraint_xs),
+                    min(crop_constraint_ys),
+                    max(crop_constraint_xs),
+                    max(crop_constraint_ys),
+                ],
+            }
+        )
 
-    print("Train set: {} frames, {} multi-person".format(len(TRAIN_FRAMES), multiperson_ex))
-    out_file = open(os.path.join(DATA_PATH, "train_preprocessed.json"), "w")
+    print(
+        'Train set: {} frames, {} multi-person'.format(
+            len(TRAIN_FRAMES), multiperson_ex
+        )
+    )
+    out_file = open(os.path.join(DATA_PATH, 'train_preprocessed.json'), 'w')
     json.dump(TRAIN_FRAMES, out_file)
 
     # TEST
-    test_csv_path = os.path.join(DATA_PATH, "test_annotations_release.txt")
-    column_names = ['path', 'idx', 'body_bbox_x', 'body_bbox_y', 'body_bbox_w', 'body_bbox_h', 'eye_x', 'eye_y',
-                                'gaze_x', 'gaze_y', 'bbox_x_min', 'bbox_y_min', 'bbox_x_max', 'bbox_y_max', 'source', 'meta']
+    test_csv_path = os.path.join(DATA_PATH, 'test_annotations_release.txt')
+    column_names = [
+        'path',
+        'idx',
+        'body_bbox_x',
+        'body_bbox_y',
+        'body_bbox_w',
+        'body_bbox_h',
+        'eye_x',
+        'eye_y',
+        'gaze_x',
+        'gaze_y',
+        'bbox_x_min',
+        'bbox_y_min',
+        'bbox_x_max',
+        'bbox_y_max',
+        'source',
+        'meta',
+    ]
     df = pd.read_csv(test_csv_path, header=None, names=column_names, index_col=False)
 
     TEST_FRAME_DICT = {}
-    df = df.groupby(["path", "eye_x"]).agg(list) # aggregate over frames
-    for id, row in df.iterrows(): # aggregate by frame
+    df = df.groupby(['path', 'eye_x']).agg(list)  # aggregate over frames
+    for id, row in df.iterrows():  # aggregate by frame
         path, _ = id
         if path in TEST_FRAME_DICT.keys():
             TEST_FRAME_DICT[path].append(row)
@@ -121,9 +182,16 @@ def main(DATA_PATH):
 
         for i in range(num_people):
             row = item[i]
-            assert(row['bbox_x_min'].count(row['bbox_x_min'][0]) == len(row['bbox_x_min'])) # quick check that all bboxes are equivalent
-            xmin, ymin, xmax, ymax = row['bbox_x_min'][0], row['bbox_y_min'][0], row['bbox_x_max'][0], row['bbox_y_max'][0]
-            
+            assert row['bbox_x_min'].count(row['bbox_x_min'][0]) == len(
+                row['bbox_x_min']
+            )  # quick check that all bboxes are equivalent
+            xmin, ymin, xmax, ymax = (
+                row['bbox_x_min'][0],
+                row['bbox_y_min'][0],
+                row['bbox_x_max'][0],
+                row['bbox_y_max'][0],
+            )
+
             if xmin > xmax:
                 temp = xmin
                 xmin = xmax
@@ -132,7 +200,7 @@ def main(DATA_PATH):
                 temp = ymin
                 ymin = ymax
                 ymax = temp
-            
+
             # move in out of frame bbox annotations
             xmin = max(xmin, 0)
             ymin = max(ymin, 0)
@@ -152,37 +220,57 @@ def main(DATA_PATH):
             crop_constraint_xs.extend([crop_xmin, crop_xmax])
             crop_constraint_ys.extend([crop_ymin, crop_ymax])
 
-            heads.append({
-                'bbox': [xmin, ymin, xmax, ymax],
-                'bbox_norm': [xmin / float(width), ymin / float(height), xmax / float(width), ymax / float(height)],
-                'gazex': gazex,
-                'gazey': gazey,
-                'gazex_norm': gazex_norm,
-                'gazey_norm': gazey_norm,
-                'inout': 1, # all test frames are in frame
-                'num_annot': len(gazex),
-                'crop_region': [crop_xmin, crop_ymin, crop_xmax, crop_ymax],
-                'crop_region_norm': [crop_xmin / float(width), crop_ymin / float(height), crop_xmax / float(width), crop_ymax / float(height)],
-                'head_id': i
-            })
-        
+            heads.append(
+                {
+                    'bbox': [xmin, ymin, xmax, ymax],
+                    'bbox_norm': [
+                        xmin / float(width),
+                        ymin / float(height),
+                        xmax / float(width),
+                        ymax / float(height),
+                    ],
+                    'gazex': gazex,
+                    'gazey': gazey,
+                    'gazex_norm': gazex_norm,
+                    'gazey_norm': gazey_norm,
+                    'inout': 1,  # all test frames are in frame
+                    'num_annot': len(gazex),
+                    'crop_region': [crop_xmin, crop_ymin, crop_xmax, crop_ymax],
+                    'crop_region_norm': [
+                        crop_xmin / float(width),
+                        crop_ymin / float(height),
+                        crop_xmax / float(width),
+                        crop_ymax / float(height),
+                    ],
+                    'head_id': i,
+                }
+            )
+
         # visualize_heads(img_path, heads)
-        TEST_FRAMES.append({
-            'path': path,
-            'heads': heads,
-            'num_heads': num_people,
-            'width': width,
-            'height': height,
-            'crop_region': [min(crop_constraint_xs), min(crop_constraint_ys), max(crop_constraint_xs), max(crop_constraint_ys)],
-        })
+        TEST_FRAMES.append(
+            {
+                'path': path,
+                'heads': heads,
+                'num_heads': num_people,
+                'width': width,
+                'height': height,
+                'crop_region': [
+                    min(crop_constraint_xs),
+                    min(crop_constraint_ys),
+                    max(crop_constraint_xs),
+                    max(crop_constraint_ys),
+                ],
+            }
+        )
         if num_people > 1:
             multiperson_ex += 1
 
-    print("Test set: {} frames, {} multi-person".format(len(TEST_FRAMES), multiperson_ex))
-    out_file = open(os.path.join(DATA_PATH, "test_preprocessed.json"), "w")
+    print(
+        'Test set: {} frames, {} multi-person'.format(len(TEST_FRAMES), multiperson_ex)
+    )
+    out_file = open(os.path.join(DATA_PATH, 'test_preprocessed.json'), 'w')
     json.dump(TEST_FRAMES, out_file)
 
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main(args.data_path)
