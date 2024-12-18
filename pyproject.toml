@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "ipywidgets>=8.1.5",
     "matplotlib>=3.10.0",
     "numpy>=2.2.0",
     "pandas>=2.2.3",
@@ -12,6 +13,7 @@ dependencies = [
     "retinaface-pytorch>=0.0.7",
     "scikit-learn>=1.6.0",
     "scipy>=1.14.1",
+    "screeninfo>=0.8.1",
     "timm>=1.0.12",
     "torch==2.4.1",
     "torchaudio==2.4.1",
@@ -46,7 +48,7 @@ xformers = [
   { index = "pytorch-cu124", marker = "platform_system != 'Darwin'" },
 ]
 triton = [
-  { url = "https://huggingface.co/madbuda/triton-windows-builds/resolve/main/triton-3.0.0-cp310-cp310-win_amd64.whl", marker = "platform_system == 'Windows'" },
+  { url = "https://huggingface.co/madbuda/triton-windows-builds/resolve/main/triton-3.0.0-cp312-cp312-win_amd64.whl", marker = "platform_system == 'Windows'" },
 ]
 
 [tool.taskipy.tasks]
