@@ -66,7 +66,6 @@ def visualize_all(cv_image, heatmaps, bboxes, inout_scores, inout_thresh=0.5):
             color,
             thickness,
         )
-        print(f'inout_scores: {inout_scores}')
 
         if inout_scores is not None:
             inout_score = inout_scores[i]
@@ -88,14 +87,6 @@ def visualize_all(cv_image, heatmaps, bboxes, inout_scores, inout_thresh=0.5):
                 lineType=cv2.LINE_AA,
             )
 
-        print(
-            'inout_score: ',
-            inout_score,
-            'inout_thresh: ',
-            inout_thresh,
-            'inout_score > inout_thresh: ',
-            inout_score > inout_thresh,
-        )
         if inout_scores is not None and inout_score > inout_thresh:
             heatmap = heatmaps[i]
             heatmap_np = heatmap.detach().cpu().numpy()
