@@ -149,14 +149,12 @@ def main():
                 input = {'images': img_tensor, 'bboxes': [norm_bboxes]}
                 with torch.no_grad():
                     output = model(input)
-                window.draw(
-                    visualize_all(
-                        frame,
-                        output['heatmap'][0],
-                        norm_bboxes,
-                        output['inout'][0] if output['inout'] is not None else None,
-                        inout_thresh=0.5,
-                    )
+                visualize_all(
+                    frame,
+                    output['heatmap'][0],
+                    norm_bboxes,
+                    output['inout'][0] if output['inout'] is not None else None,
+                    inout_thresh=0.5,
                 )
 
             window.draw(frame)
