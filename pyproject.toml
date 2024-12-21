@@ -54,6 +54,7 @@ triton = [
 [tool.taskipy.tasks]
 lint = "ruff check"
 fmt = "ruff format"
+play = "uv run main.py"
 
 [tool.ruff.format]
 quote-style = "single"

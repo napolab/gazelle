@@ -5,13 +5,14 @@ import torch
 from utils.web_camera import CameraDeviceInfo, WebCamera
 from utils.window import CVWindow
 from retinaface.pre_trained_models import get_model
+from hubconf import gazelle_dinov2_vitl14_inout
 
 device_info = CameraDeviceInfo(device_id=0, width=1920, height=1080, fps=60)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 retina_face_model = get_model('resnet50_2020-07-20', max_size=2048, device=str(device))
 retina_face_model.eval()
 
-model, transform = torch.hub.load('fkryan/gazelle', 'gazelle_dinov2_vitl14_inout')
+model, transform = gazelle_dinov2_vitl14_inout()
 model.eval().to(device)
 
 
