@@ -6,6 +6,10 @@ from utils.web_camera import CameraDeviceInfo, WebCamera
 from utils.window import CVWindow
 from retinaface.pre_trained_models import get_model
 from hubconf import gazelle_dinov2_vitl14_inout
+import warnings
+
+warnings.filterwarnings('ignore', category=UserWarning)
+warnings.filterwarnings('ignore', category=FutureWarning)
 
 device_info = CameraDeviceInfo(device_id=0, width=1920, height=1080, fps=60)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
